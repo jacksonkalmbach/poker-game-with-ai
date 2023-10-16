@@ -1,3 +1,7 @@
+from flask import Flask, jsonify, request
+from flask_socketio import SocketIO, emit
+from flask_cors import CORS
+
 import random
 from player import Player
 from game import Game
@@ -5,28 +9,19 @@ from dealer import Dealer
 from cards import Card
 from visuals import Viz_Cards
 
+app = Flask(__name__)
+CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+@socketio.on('connect')
+def handle_connection():
+    print("Client connected!")
 
 def game_loop(game):
 
 		print(f"big blind position{game.bb_pos}")
 		print(f"small blind position{game.sb_pos}")
 
-
-		'''
-		NEED TO ADJUST FOR THE FACT THAT YOU PAY BLINDS DIFFERENT 
-		SO WHEN YOU DO THE BLIND PAYOUTS AT END OF THE HAND NEED TO REDUCE AMOUNT
-		TO WIN FOR EVERYONE AND SUBTRACT THE BLINDS
-		AMOUNT TO WIN FOR EVERYONE BESIDES BB and SB (maybe BB as well)
-		TECHNICALLY EVERYONE BESIDES THE SB has paid an entire BB so self.wagered is technically
-		a BB for everyone WHICH CAN ACTUALLY FIX SHIT SINCE THEN CAN WIN AMMOUNT WILL BE THE SAME FOR
-		EVERYONE UNLESS SOMEONE DOESN'T HAVE A FULL STACK IN WHICH CASE YOU DON'T HAVE TO DO THE BLINDS
-		THING YOU'LL JUST HAVE A FULL LIST OF WHAT EVERYONE CAN W
-		'''
-
-		'''
-		ACTUALLY AMOUNT CNA WIN SHOULD BE 0 UNTIL ALL BLINDS PAID OR FOLDED 
-		IN WHICH CASE 
-		'''
 		#PREFLOP
 		print("PREFLOP")
 		game.preflop()
@@ -97,15 +92,24 @@ def game_loop(game):
 			game.reset()
 			return
 
+@app.route('/start-game', methods=['POST'])
+def start_game_endpoint():
+    num_players = request.json.get('num_players')
+    game = Game(num_players,100,1,.5)
+    game_loop(game)
+    return jsonify({"message": "Game started!"})
+
+# if __name__ == '__main__':
+
+
+# 	random.seed(42)
+# 	game = Game(3,100,1,.5)
+
+# 	game_loop(game)
+
 
 if __name__ == '__main__':
-
-
-	random.seed(42)
-	game = Game(3,100,1,.5)
-
-	game_loop(game)
-
+    socketio.run(app, host='0.0.0.0', port=5003)
 
 	
 		

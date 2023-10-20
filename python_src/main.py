@@ -19,8 +19,14 @@ def handle_connection():
 
 def game_loop(game):
 
-		print(f"big blind position{game.bb_pos}")
-		print(f"small blind position{game.sb_pos}")
+		print(f"big blind position {game.bb_pos}")
+		print(f"small blind position {game.sb_pos}")
+
+		try:
+			socketio.emit('blind_positions', {'bb_pos': game.bb_pos, 'sb_pos': game.sb_pos})
+			print("Emit successful")
+		except Exception as e:
+			print(f"Emit failed: {e}")
 
 		#PREFLOP
 		print("PREFLOP")
@@ -35,7 +41,7 @@ def game_loop(game):
 		print(f"THE POT BEFORE PRFLOP ACTION IS: {game.pot}")
 		game.street_preflop()
 		game.street_reset()
-		#print([i.amount_to_win for i in game.players])
+
 		if game.hand_over():
 			game.payout(game.get_player())
 			game.reset()
@@ -92,20 +98,15 @@ def game_loop(game):
 			game.reset()
 			return
 
+random.seed(42)
+
 @app.route('/start-game', methods=['POST'])
 def start_game_endpoint():
-    num_players = request.json.get('num_players')
-    game = Game(num_players,100,1,.5)
+    print('NEW GAME')
+    # num_players = request.json.get('num_players')
+    game = Game(3,100,1,.5)
     game_loop(game)
-    return jsonify({"message": "Game started!"})
-
-# if __name__ == '__main__':
-
-
-# 	random.seed(42)
-# 	game = Game(3,100,1,.5)
-
-# 	game_loop(game)
+    return jsonify('Game Started')
 
 
 if __name__ == '__main__':
